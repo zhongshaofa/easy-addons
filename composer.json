@@ -16,7 +16,7 @@
   },
   "autoload": {
     "psr-4": {
-      "think\\": "src/"
+      "EasyAddons\\": "src/"
     },
     "files": [
       "src/helper.php"
