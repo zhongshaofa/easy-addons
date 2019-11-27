@@ -12,16 +12,31 @@
 
 namespace EasyAddons;
 
-
 use think\App;
 use think\exception\ValidateException;
 use think\Validate;
+use think\facade\View;
+use EasyAddons\driver\Request;
 
 /**
  * 控制器基础类
  */
 abstract class Controller
 {
+
+    /**
+     * 基础模板路径
+     * @var string
+     */
+    protected $baseTemplatePath;
+
+    /**
+     * 当前模板路径
+     * @var string
+     */
+    protected $currentTemplatePath;
+
+
     /**
      * Request实例
      * @var \think\Request
@@ -48,13 +63,14 @@ abstract class Controller
 
     /**
      * 构造方法
-     * @access public
-     * @param App $app 应用对象
+     * Controller constructor.
+     * @param App $app
+     * @param Request $request
      */
-    public function __construct(App $app)
+    public function __construct(App $app, Request $request)
     {
         $this->app = $app;
-        $this->request = $this->app->request;
+        $this->request = $request;
 
         // 控制器初始化
         $this->initialize();
@@ -65,6 +81,36 @@ abstract class Controller
      */
     protected function initialize()
     {
+        $addonsPath = addons_path();
+        $module = $this->request->module();
+        $controller = $this->request->controller();
+        $action = $this->request->action();
+        $this->baseTemplatePath = $addonsPath . $module . DIRECTORY_SEPARATOR;
+        $this->currentTemplatePath = $addonsPath . $module . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . $controller . DIRECTORY_SEPARATOR . $action;
+    }
+
+    /**
+     * 模板变量赋值
+     * @param string|array $name 模板变量
+     * @param mixed $value 变量值
+     * @return View
+     */
+    public function assign($name, $value = null)
+    {
+        return View::assign($name, $value);
+    }
+
+    /**
+     * 解析和获取模板内容 用于输出
+     * @param string $template
+     * @param array $vars
+     * @return string
+     * @throws \Exception
+     */
+    public function fetch($template = '', $vars = [])
+    {
+        empty($template) && $template = $this->currentTemplatePath . '.html';
+        return View::fetch($template, $vars);
     }
 
     /**

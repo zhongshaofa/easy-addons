@@ -61,6 +61,24 @@ class Service extends BaseService
     protected $autoloadConteollers = [];
 
     /**
+     * 当前安装的模块名
+     * @var string
+     */
+    protected $module;
+
+    /**
+     * 当前请求控制器
+     * @var string
+     */
+    protected $controller;
+
+    /**
+     * 当前请求的方法
+     * @var string
+     */
+    protected $action;
+
+    /**
      * 构造方法
      * Service constructor.
      * @param App $app
@@ -118,6 +136,7 @@ class Service extends BaseService
     /**
      * 绑定路由
      * @param Route $route
+     * @throws \ReflectionException
      */
     public function boot(Route $route)
     {
@@ -129,6 +148,9 @@ class Service extends BaseService
         $route->rule('/' . $uri, "{$controller}@{$action}");
     }
 
+    /**
+     * 自动加载已安装插件
+     */
     protected function autoload()
     {
         $this->autoloadFiles = $this->readDirAllFiles($this->addonsPath);
@@ -178,6 +200,13 @@ class Service extends BaseService
         return $list;
     }
 
+    /**
+     * 检测插件方法
+     * @param $controller
+     * @param $action
+     * @return bool
+     * @throws \ReflectionException
+     */
     protected function checkActionByController($controller, $action)
     {
         $reflection = new ReflectionClass($controller);
@@ -186,6 +215,11 @@ class Service extends BaseService
         return in_array($action, $actions) ? true : false;
     }
 
+    /**
+     * 获取格式化路由
+     * @return array|bool
+     * @throws \ReflectionException
+     */
     protected function formatRoute()
     {
         $request = $this->app->request->request();
@@ -223,13 +257,15 @@ class Service extends BaseService
         return [$uri, $controller, $action];
     }
 
-    public function getInstallContent()
+    /**
+     * 获取安装的信息
+     * @return string
+     */
+    protected function getInstallContent()
     {
         return <<<EOT
 <?php
-
 return [
-
 ];
 EOT;
     }
