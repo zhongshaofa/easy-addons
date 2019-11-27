@@ -18,24 +18,12 @@ use think\Validate;
 use think\facade\View;
 use EasyAddons\driver\Request;
 
+
 /**
  * 控制器基础类
  */
 abstract class Controller
 {
-
-    /**
-     * 基础模板路径
-     * @var string
-     */
-    protected $baseTemplatePath;
-
-    /**
-     * 当前模板路径
-     * @var string
-     */
-    protected $currentTemplatePath;
-
 
     /**
      * Request实例
@@ -62,6 +50,30 @@ abstract class Controller
     protected $middleware = [];
 
     /**
+     * 插件路径
+     * @var string
+     */
+    protected $addonsPath;
+
+    /**
+     * 插件模块
+     * @var string
+     */
+    protected $module;
+
+    /**
+     * 控制器
+     * @var string
+     */
+    protected $controller;
+
+    /**
+     * 方法
+     * @var string
+     */
+    protected $action;
+
+    /**
      * 构造方法
      * Controller constructor.
      * @param App $app
@@ -81,12 +93,10 @@ abstract class Controller
      */
     protected function initialize()
     {
-        $addonsPath = addons_path();
-        $module = $this->request->module();
-        $controller = $this->request->controller();
-        $action = $this->request->action();
-        $this->baseTemplatePath = $addonsPath . $module . DIRECTORY_SEPARATOR;
-        $this->currentTemplatePath = $addonsPath . $module . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . $controller . DIRECTORY_SEPARATOR . $action;
+        $this->addonsPath = addons_path();
+        $this->module = $this->request->module();
+        $this->controller = $this->request->controller();
+        $this->action = $this->request->action();
     }
 
     /**
@@ -109,7 +119,7 @@ abstract class Controller
      */
     public function fetch($template = '', $vars = [])
     {
-        empty($template) && $template = $this->currentTemplatePath . '.html';
+        empty($template) && $template = $this->controller . DIRECTORY_SEPARATOR . $this->action;
         return View::fetch($template, $vars);
     }
 

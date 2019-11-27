@@ -14,10 +14,12 @@ namespace EasyAddons\driver;
 
 use think\App;
 use think\exception\HttpException;
+use think\facade\Config;
 use think\Route;
 use think\Service as BaseService;
 use ReflectionClass;
 use ReflectionMethod;
+use EasyAddons\facade\Request;
 
 /**
  * 插件服务
@@ -77,6 +79,7 @@ class Service extends BaseService
      * @var string
      */
     protected $action;
+
 
     /**
      * 构造方法
@@ -146,6 +149,7 @@ class Service extends BaseService
         }
         list($uri, $controller, $action) = $format;
         $route->rule('/' . $uri, "{$controller}@{$action}");
+        $this->loadView();
     }
 
     /**
@@ -163,6 +167,20 @@ class Service extends BaseService
     protected function loadMiddleware()
     {
 
+    }
+
+    /**
+     * 重载视图模板路径
+     */
+    protected function loadView()
+    {
+        $this->module = Request::module();
+        $this->controller = Request::controller();
+        $this->action = Request::action();
+        $baseTemplatePath = $this->addonsPath . DIRECTORY_SEPARATOR . $this->module . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR;
+        $config = Config::get('view');
+        $config['view_path'] = $baseTemplatePath;
+        Config::set($config, 'view');
     }
 
     /**
@@ -228,21 +246,20 @@ class Service extends BaseService
         }
         $uri = substr($request['s'], 2);
         $uriArray = explode('/', $uri);
-        if (count($uriArray) <= 2 && $uriArray[0] != $this->config['path']) {
+        if (count($uriArray) <= 2 || $uriArray[0] != $this->config['path']) {
             return false;
         } elseif (!isset($this->install[$uriArray[1]])) {
             throw new HttpException(404, '插件不存在或者未安装:' . $uriArray[1]);
         } elseif (count($uriArray) == 3) {
             $controllerName = lineToHump(ucwords(end($uriArray)));
             $action = $this->config['default_action'];
-            unset($uriArray[count($uriArray) - 1]);
         } else {
-            $controllerName = lineToHump(ucwords($uriArray[count($uriArray) - 2]));
+            $controllerArray = array_slice($uriArray, 2, -1);
+            $controllerArray[count($controllerArray) - 1] = ucwords($controllerArray[count($controllerArray) - 1]);
+            $controllerName = implode('\\', $controllerArray);
             $action = end($uriArray);
-            unset($uriArray[count($uriArray) - 1]);
-            unset($uriArray[count($uriArray) - 1]);
         }
-        $uriArray = array_merge($uriArray, [
+        $uriArray = array_merge(array_slice($uriArray, 0, 2), [
             'controller',
             $controllerName,
         ]);
